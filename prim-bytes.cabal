@@ -35,7 +35,7 @@ common common
   default-language: Haskell2010
 
   default-extensions:
-    ImportQualifiedPost MagicHash
+    BlockArguments ImportQualifiedPost MagicHash UnboxedTuples
 
   ghc-options:
     -Wall
@@ -62,7 +62,7 @@ library
   hs-source-dirs: src
 
   default-extensions:
-    BlockArguments RankNTypes ScopedTypeVariables
+    RankNTypes ScopedTypeVariables
 
   ghc-options:
     -- `-j4` is set (as opposed to `-j`) due to the small number of modules that 
@@ -121,6 +121,11 @@ test-suite test
 
   other-modules:   
     Test.ByteArray
+    Test.ByteArray.Conversion
+    Test.ByteArray.Copy
+    Test.CharArray
+    Test.CharArray.Conversion
+    Test.CharArray.Copy
     Test.Compat
     Test.Gen
     Test.MutByteArray

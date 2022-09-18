@@ -9,6 +9,7 @@ module Main (main) where
 import Test.Tasty (defaultMain)
 
 import Test.ByteArray qualified
+import Test.CharArray qualified
 import Test.Compat (TestTree, testGroup)
 import Test.MutByteArray qualified
 
@@ -22,5 +23,6 @@ testTree =
   testGroup
     "Test"
     [ Test.ByteArray.testTree
+    , Test.CharArray.testTree
     , Test.MutByteArray.testTree
     ]

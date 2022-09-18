@@ -1,23 +1,16 @@
+module Test.MutByteArray
+  ( testTree,
+  )
+where
 
-module Test.MutByteArray 
-  ( testTree
-  ) 
-where 
-
-import Hedgehog (Property, forAll, property, (===))
-import qualified Hedgehog.Gen as Gen
 import Test.Tasty ()
 
-import Data.ByteArray.Prim (ByteArray#)
-
-import Test.Compat (TestTree, testGroup, testProp)
+import Test.Compat (TestTree, testGroup)
 
 --------------------------------------------------------------------------------
 
-testTree :: TestTree 
+testTree :: TestTree
 testTree =
-  testGroup 
-    "ByteArray"
-    [
-    ]
-
+  testGroup
+    "MutByteArray"
+    []
