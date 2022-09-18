@@ -98,7 +98,7 @@ type MutByteArray# = MutableByteArray#
 --
 -- @since 1.0.0
 new# :: Int# -> State# s -> (# State# s, MutByteArray# s #)
-new# len# = GHC.newAlignedPinnedByteArray# len# 4# -- TODO: unpack as safe/unsafe
+new# len# = GHC.newPinnedByteArray# len# -- TODO: unpack as safe/unsafe
 
 -- Copy ------------------------------------------------------------------------
 
@@ -115,7 +115,7 @@ slice# :: MutByteArray# s -> Int# -> Int# -> State# s -> (# State# s, MutByteArr
 slice# src# i0# i1# st0# =
   -- TODO: unpack as safe/unsafe
   let !(# st1#, dst# #) = new# (Int.subInt# i1# i0#) st0#
-   in (# copy# src# i0# dst# i0# (Int.subInt# i1# i0#) st1#, dst# #)
+   in (# copy# src# i0# dst# 0# (Int.subInt# i1# i0#) st1#, dst# #)
 
 -- | TODO
 --
