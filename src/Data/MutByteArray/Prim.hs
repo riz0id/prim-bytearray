@@ -98,7 +98,7 @@ type MutByteArray# = MutableByteArray#
 --
 -- @since 1.0.0
 new# :: Int# -> State# s -> (# State# s, MutByteArray# s #)
-new# = GHC.newByteArray# -- TODO: unpack as safe/unsafe
+new# len# = GHC.newAlignedPinnedByteArray# len# 4# -- TODO: unpack as safe/unsafe
 
 -- Copy ------------------------------------------------------------------------
 
