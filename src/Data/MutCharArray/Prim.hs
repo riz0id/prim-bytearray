@@ -96,7 +96,7 @@ import Data.MutCharArray.Prim.Unsafe
 --
 -- @since 1.0.0
 new# :: Int# -> State# s -> (# State# s, MutCharArray# s #)
-new# len# = coerce GHC.newByteArray# (Int.mulInt# 4# len#) -- TODO: unpack as safe/unsafe
+new# len# = coerce GHC.newAlignedPinnedByteArray# (Int.mulInt# 4# len#) 4# -- TODO: unpack as safe/unsafe
 
 -- Copy ------------------------------------------------------------------------
 
