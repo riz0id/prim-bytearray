@@ -103,13 +103,14 @@ pack# :: [Word8] -> ByteArray#
 pack# xs = GHC.runRW# \st0# -> 
   let !(I# len#) = length xs
       !(# st1#, dst# #) = MutByteArray.new# len# st0#
+      !st2# = GHC.setByteArray# dst# 0# len# 0# st1# 
 
       loop# :: Int# -> [Word8] -> State# RealWorld -> State# RealWorld
       loop# _ [] st# = st#
       loop# i# (W8# x# : xs') st# = 
         let !st'# = MutByteArray.write# dst# i# x# st# 
          in loop# (Int.addInt# 1# i#) xs' st'#
-   in case MutByteArray.unsafeFreeze# dst# (loop# 0# xs st1#) of 
+   in case MutByteArray.unsafeFreeze# dst# (loop# 0# xs st2#) of 
         (# _, xs# #) -> xs# 
 {-# INLINE pack# #-}
 

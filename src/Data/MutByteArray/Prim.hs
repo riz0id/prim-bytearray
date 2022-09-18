@@ -188,7 +188,7 @@ index# xs# i# st0# =
 write# :: MutByteArray# s -> Int# -> Word8# -> State# s -> State# s
 write# xs# i# x# st0# =
   let !(# st1#, len# #) = size# xs# st0#
-      lower# = Int.gtInt# 0# i#
+      lower# = Int.leInt# 0# i#
       upper# = Int.ltInt# i# len#
    in case Bool.and# lower# upper# of
         True# -> unsafeWrite# xs# i# x# st1#

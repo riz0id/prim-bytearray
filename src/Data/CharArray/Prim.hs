@@ -96,6 +96,7 @@ import Data.ByteArray.Prim qualified as ByteArray
 
 import Data.MutCharArray.Prim.Core (MutCharArray#)
 import qualified Data.MutCharArray.Prim as MutCharArray
+import qualified Data.MutCharArray.Prim.Unsafe as MutCharArray
 
 --------------------------------------------------------------------------------
 
@@ -110,7 +111,7 @@ pack# xs = GHC.runRW# \st0# ->
       loop# :: Int# -> [Char] -> State# RealWorld -> State# RealWorld
       loop# _ [] st# = st#
       loop# i# (C# x# : xs') st# = 
-        let !st'# = MutCharArray.write# dst# i# x# st# 
+        let !st'# = MutCharArray.unsafeWrite# dst# i# x# st# 
          in loop# (Int.addInt# 1# i#) xs' st'#
    in case MutCharArray.unsafeFreeze# dst# (loop# 0# xs st1#) of 
         (# _, xs# #) -> xs# 
