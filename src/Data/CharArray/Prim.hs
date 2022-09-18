@@ -28,6 +28,11 @@ module Data.CharArray.Prim
     -- pin#,
     -- aligned#,
 
+    -- * Comparison
+    eq#,
+    same#,
+    compare#,
+
     -- * Copy
     slice#,
     clone#,
@@ -36,6 +41,7 @@ module Data.CharArray.Prim
     thaw#,
 
     -- * Query
+    address#,
     size#,
     null#,
     pinned#,
@@ -76,7 +82,7 @@ import Data.Coerce (coerce)
 import Data.Int.Prim (Int#)
 import Data.Int.Prim qualified as Int
 
-import GHC.Exts (ByteArray#, Char#, State#)
+import GHC.Exts (ByteArray#, Char#, State#, Addr#)
 import GHC.Exts qualified as GHC
 
 --------------------------------------------------------------------------------
@@ -87,6 +93,26 @@ import Data.CharArray.Prim.Unsafe (unsafeIndex#, unsafeThaw#)
 import Data.ByteArray.Prim qualified as ByteArray
 
 import Data.MutCharArray.Prim.Core (MutCharArray#)
+
+-- Comparison ------------------------------------------------------------------
+
+-- | TODO
+--
+-- @since 1.0.0
+eq# :: ByteArray# -> ByteArray# -> Bool#
+eq# xs# ys# = Int.eqInt# 0# (compare# xs# ys#)
+
+-- | TODO
+--
+-- @since 1.0.0
+same# :: ByteArray# -> ByteArray# -> Bool#
+same# xs# ys# = Bool.unsafeFromInt# (GHC.eqAddr# (address# xs#) (address# ys#))
+
+-- | TODO
+--
+-- @since 1.0.0
+compare# :: ByteArray# -> ByteArray# -> Int# 
+compare# = coerce ByteArray.compare# 
 
 -- Copy ------------------------------------------------------------------------
 
@@ -116,6 +142,12 @@ thaw# src# st0# =
    in unsafeThaw# dst# st1#
 
 -- Query -----------------------------------------------------------------------
+
+-- | TODO
+--
+-- @since 1.0.0
+address# :: ByteArray# -> Addr#
+address# = coerce ByteArray.address# 
 
 -- | TODO
 --

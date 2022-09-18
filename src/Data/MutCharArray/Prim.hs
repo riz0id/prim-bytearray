@@ -37,6 +37,7 @@ module Data.MutCharArray.Prim
     unsafeFreeze#,
 
     -- * Query
+    address#,
     size#,
     null#,
     pinned#,
@@ -75,7 +76,7 @@ import Data.Coerce (coerce)
 import Data.Int.Prim (Int#)
 import Data.Int.Prim qualified as Int
 
-import GHC.Exts (ByteArray#, Char#, State#)
+import GHC.Exts (ByteArray#, Char#, State#, Addr#)
 import GHC.Exts qualified as GHC
 
 --------------------------------------------------------------------------------
@@ -137,6 +138,12 @@ freeze# :: MutCharArray# s -> State# s -> (# State# s, ByteArray# #)
 freeze# = coerce MutByteArray.freeze#
 
 -- Query -----------------------------------------------------------------------
+
+-- | TODO
+--
+-- @since 1.0.0
+address# :: MutCharArray# s -> Addr#
+address# = coerce GHC.mutableByteArrayContents# 
 
 -- | TODO
 --

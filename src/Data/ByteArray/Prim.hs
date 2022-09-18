@@ -27,6 +27,11 @@ module Data.ByteArray.Prim
     -- pin#,
     -- aligned#,
 
+    -- * Comparison
+    eq#,
+    same#,
+    compare#,
+
     -- * Copy
     slice#,
     clone#,
@@ -35,6 +40,7 @@ module Data.ByteArray.Prim
     thaw#,
 
     -- * Query
+    address#,
     size#,
     null#,
     pinned#,
@@ -71,7 +77,7 @@ import Data.Bool.Prim qualified as Bool
 import Data.Int.Prim (Int#)
 import Data.Int.Prim qualified as Int
 
-import GHC.Exts (ByteArray#, Word8#, State#)
+import GHC.Exts (Word8#, State#, Addr#)
 import GHC.Exts qualified as GHC
 
 --------------------------------------------------------------------------------
@@ -82,6 +88,41 @@ import Data.ByteArray.Prim.Unsafe
   )
 import Data.MutByteArray.Prim (MutByteArray#)
 import Data.MutByteArray.Prim qualified as MByteArray
+import Data.Primitive.ByteArray
+
+-- Comparison ------------------------------------------------------------------
+
+-- | TODO
+--
+-- @since 1.0.0
+eq# :: ByteArray# -> ByteArray# -> Bool#
+eq# xs# ys# = Int.eqInt# 0# (compare# xs# ys#)
+
+-- | TODO
+--
+-- @since 1.0.0
+same# :: ByteArray# -> ByteArray# -> Bool#
+same# xs# ys# = Bool.unsafeFromInt# (GHC.eqAddr# (address# xs#) (address# ys#))
+
+-- | TODO
+--
+-- @since 1.0.0
+compare# :: ByteArray# -> ByteArray# -> Int# 
+compare# xs# ys# = case same# xs# ys# of 
+  True# -> 0#
+  False# -> 
+    let len0# = size# xs# 
+        len1# = size# ys# 
+     in case Int.eqInt# len0# len1# of 
+        True# ->  GHC.compareByteArrays# xs# 0# ys# 0# len0#
+        False# -> compareInt# len0# len1#
+
+-- TODO: gross
+compareInt# :: Int# -> Int# -> Int# 
+compareInt# x# y# =
+  case Int.eqInt# x# y# of 
+    True# -> 0#
+    False# -> Int.subInt# (x# GHC.<# y#) (x# GHC.># y#) 
 
 -- Copy ------------------------------------------------------------------------
 
@@ -116,6 +157,12 @@ thaw# src# st0# =
    in unsafeThaw# dst# st1#
 
 -- Query -----------------------------------------------------------------------
+
+-- | TODO
+--
+-- @since 1.0.0
+address# :: ByteArray# -> Addr#
+address# = GHC.byteArrayContents# 
 
 -- | TODO
 --

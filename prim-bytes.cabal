@@ -84,6 +84,7 @@ library
     , prim-bool
     , prim-compat      >= 1.0.0  && < 1.1.0
     , prim-int
+    , primitive
     , template-haskell >= 2.17.0 && < 2.19
 
   exposed-modules:

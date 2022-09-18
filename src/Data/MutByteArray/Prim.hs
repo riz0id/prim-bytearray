@@ -38,6 +38,7 @@ module Data.MutByteArray.Prim
     unsafeFreeze#,
 
     -- * Query
+    address#,
     size#,
     null#,
     pinned#,
@@ -75,7 +76,7 @@ import Data.Bool.Prim qualified as Bool
 import Data.Int.Prim (Int#)
 import Data.Int.Prim qualified as Int
 
-import GHC.Exts (ByteArray#, MutableByteArray#, State#, Word8#)
+import GHC.Exts (ByteArray#, MutableByteArray#, State#, Word8#, Addr#)
 import GHC.Exts qualified as GHC
 
 --------------------------------------------------------------------------------
@@ -138,6 +139,12 @@ freeze# src# st0# =
    in unsafeFreeze# dst# st1#
 
 -- Query -----------------------------------------------------------------------
+
+-- | TODO
+--
+-- @since 1.0.0
+address# :: MutByteArray# s -> Addr#
+address# = GHC.mutableByteArrayContents# 
 
 -- | TODO
 --
