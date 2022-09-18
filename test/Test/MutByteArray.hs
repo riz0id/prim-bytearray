@@ -1,6 +1,6 @@
 
 module Test.MutByteArray 
-  ( tests
+  ( testTree
   ) 
 where 
 
@@ -14,8 +14,8 @@ import Test.Compat (TestTree, testGroup, testProp)
 
 --------------------------------------------------------------------------------
 
-tests :: TestTree 
-tests =
+testTree :: TestTree 
+testTree =
   testGroup 
     "ByteArray"
     [

@@ -22,5 +22,5 @@ testTree =
   testGroup
     "Test"
     [ Test.ByteArray.testTree
-    , Test.Mutable.testTree
+    , Test.MutByteArray.testTree
     ]
