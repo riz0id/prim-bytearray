@@ -109,7 +109,7 @@ copy# src# i0# dst# i1# len# =
   let !i0'# = Int.mulInt# 4# i0#
       !i1'# = Int.mulInt# 4# i1#
       !len'# = Int.mulInt# 4# len#
-   in coerce MutByteArray.copy# src# i0'# dst# i1'# len'#
+   in coerce MutByteArray.copy# dst# i0'# src# i1'# len'#
 
 -- | TODO
 --

@@ -115,7 +115,7 @@ slice# :: MutByteArray# s -> Int# -> Int# -> State# s -> (# State# s, MutByteArr
 slice# src# i0# i1# st0# =
   -- TODO: unpack as safe/unsafe
   let !(# st1#, dst# #) = new# (Int.subInt# i1# i0#) st0#
-   in (# copy# src# i0# dst# 0# (Int.subInt# i1# i0#) st1#, dst# #)
+   in (# copy# dst# 0# src# i0# (Int.subInt# i1# i0#) st1#, dst# #)
 
 -- | TODO
 --
