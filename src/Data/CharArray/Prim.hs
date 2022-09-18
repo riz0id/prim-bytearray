@@ -21,6 +21,8 @@
 -- @since 1.0.0
 module Data.CharArray.Prim
   ( CharArray# (CharArray#),
+    pack#,
+    unpack#,
 
     -- * Construction
 
@@ -82,7 +84,7 @@ import Data.Coerce (coerce)
 import Data.Int.Prim (Int#)
 import Data.Int.Prim qualified as Int
 
-import GHC.Exts (ByteArray#, Char#, State#, Addr#)
+import GHC.Exts (Char#, State#, Addr#, Char (C#), RealWorld, Int (I#))
 import GHC.Exts qualified as GHC
 
 --------------------------------------------------------------------------------
@@ -93,25 +95,52 @@ import Data.CharArray.Prim.Unsafe (unsafeIndex#, unsafeThaw#)
 import Data.ByteArray.Prim qualified as ByteArray
 
 import Data.MutCharArray.Prim.Core (MutCharArray#)
+import qualified Data.MutCharArray.Prim as MutCharArray
+
+--------------------------------------------------------------------------------
+
+-- | TODO
+--
+-- @since 1.0.0
+pack# :: [Char] -> CharArray# 
+pack# xs = GHC.runRW# \st0# -> 
+  let !(I# len#) = length xs
+      !(# st1#, dst# #) = MutCharArray.new# len# st0#
+
+      loop# :: Int# -> [Char] -> State# RealWorld -> State# RealWorld
+      loop# _ [] st# = st#
+      loop# i# (C# x# : xs') st# = 
+        let !st'# = MutCharArray.write# dst# i# x# st# 
+         in loop# (Int.addInt# 1# i#) xs' st'#
+   in case MutCharArray.unsafeFreeze# dst# (loop# 0# xs st1#) of 
+        (# _, xs# #) -> xs# 
+{-# INLINE pack# #-}
+
+-- | TODO
+--
+-- @since 1.0.0
+unpack# :: CharArray# -> [Char] 
+unpack# = foldr'# (\x# xs -> C# x# : xs) []
+{-# INLINE unpack# #-}
 
 -- Comparison ------------------------------------------------------------------
 
 -- | TODO
 --
 -- @since 1.0.0
-eq# :: ByteArray# -> ByteArray# -> Bool#
+eq# :: CharArray# -> CharArray# -> Bool#
 eq# xs# ys# = Int.eqInt# 0# (compare# xs# ys#)
 
 -- | TODO
 --
 -- @since 1.0.0
-same# :: ByteArray# -> ByteArray# -> Bool#
+same# :: CharArray# -> CharArray# -> Bool#
 same# xs# ys# = Bool.unsafeFromInt# (GHC.eqAddr# (address# xs#) (address# ys#))
 
 -- | TODO
 --
 -- @since 1.0.0
-compare# :: ByteArray# -> ByteArray# -> Int# 
+compare# :: CharArray# -> CharArray# -> Int# 
 compare# = coerce ByteArray.compare# 
 
 -- Copy ------------------------------------------------------------------------
@@ -119,7 +148,7 @@ compare# = coerce ByteArray.compare#
 -- | TODO
 --
 -- @since 1.0.0
-slice# :: ByteArray# -> Int# -> Int# -> State# s -> (# State# s, ByteArray# #)
+slice# :: CharArray# -> Int# -> Int# -> State# s -> (# State# s, CharArray# #)
 slice# src# i0# i1# =
   let !i0'# = Int.mulInt# 4# i0#
       !i1'# = Int.mulInt# 4# i1#
@@ -146,7 +175,7 @@ thaw# src# st0# =
 -- | TODO
 --
 -- @since 1.0.0
-address# :: ByteArray# -> Addr#
+address# :: CharArray# -> Addr#
 address# = coerce ByteArray.address# 
 
 -- | TODO

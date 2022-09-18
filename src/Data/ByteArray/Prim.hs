@@ -21,6 +21,8 @@
 -- @since 1.0.0
 module Data.ByteArray.Prim
   ( ByteArray#,
+    pack#,
+    unpack#,
 
     -- * Construction
     -- new#,
@@ -76,8 +78,9 @@ import Data.Bool.Prim (Bool# (True#, False#))
 import Data.Bool.Prim qualified as Bool
 import Data.Int.Prim (Int#)
 import Data.Int.Prim qualified as Int
+import Data.Word (Word8)
 
-import GHC.Exts (Word8#, State#, Addr#)
+import GHC.Exts (Word8#, State#, Addr#, Int (I#), RealWorld)
 import GHC.Exts qualified as GHC
 
 --------------------------------------------------------------------------------
@@ -87,8 +90,35 @@ import Data.ByteArray.Prim.Unsafe
     unsafeThaw# 
   )
 import Data.MutByteArray.Prim (MutByteArray#)
-import Data.MutByteArray.Prim qualified as MByteArray
-import Data.Primitive.ByteArray
+import Data.MutByteArray.Prim qualified as MutByteArray
+import Data.Primitive.ByteArray ( ByteArray# )
+import GHC.Word (Word8(W8#))
+
+--------------------------------------------------------------------------------
+
+-- | TODO
+--
+-- @since 1.0.0
+pack# :: [Word8] -> ByteArray# 
+pack# xs = GHC.runRW# \st0# -> 
+  let !(I# len#) = length xs
+      !(# st1#, dst# #) = MutByteArray.new# len# st0#
+
+      loop# :: Int# -> [Word8] -> State# RealWorld -> State# RealWorld
+      loop# _ [] st# = st#
+      loop# i# (W8# x# : xs') st# = 
+        let !st'# = MutByteArray.write# dst# i# x# st# 
+         in loop# (Int.addInt# 1# i#) xs' st'#
+   in case MutByteArray.unsafeFreeze# dst# (loop# 0# xs st1#) of 
+        (# _, xs# #) -> xs# 
+{-# INLINE pack# #-}
+
+-- | TODO
+--
+-- @since 1.0.0
+unpack# :: ByteArray# -> [Word8] 
+unpack# = foldr'# (\x# xs -> W8# x# : xs) []
+{-# INLINE unpack# #-}
 
 -- Comparison ------------------------------------------------------------------
 
@@ -132,9 +162,9 @@ compareInt# x# y# =
 slice# :: ByteArray# -> Int# -> Int# -> State# s -> (# State# s, ByteArray# #)
 slice# src# i0# i1# st0# = 
   let !len# = Int.subInt# i1# i0#
-      !(# st1#, dst# #) = MByteArray.new# len# st0#
+      !(# st1#, dst# #) = MutByteArray.new# len# st0#
       !st2# = GHC.copyByteArray# src# 0# dst# 0# len# st1#
-   in MByteArray.unsafeFreeze# dst# st2#
+   in MutByteArray.unsafeFreeze# dst# st2#
 
 -- | TODO
 --
@@ -142,9 +172,9 @@ slice# src# i0# i1# st0# =
 clone# :: ByteArray# -> State# s -> (# State# s, ByteArray# #)
 clone# src# st0# = 
   let !len# = size# src# 
-      !(# st1#, dst# #) = MByteArray.new# len# st0#
+      !(# st1#, dst# #) = MutByteArray.new# len# st0#
       !st2# = GHC.copyByteArray# src# 0# dst# 0# len# st1#
-   in MByteArray.unsafeFreeze# dst# st2#
+   in MutByteArray.unsafeFreeze# dst# st2#
 
 -- Thaw ------------------------------------------------------------------------
 
