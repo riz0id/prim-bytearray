@@ -6,8 +6,8 @@ mkDerivation {
   version = "1.0.1";
   src = fetchgit {
     url = "https://github.com/riz0id/prim-bool";
-    sha256 = "0ww181n143p829xb99mbi7wnjd1d5rps7z4r3av78g1khma4164i";
-    rev = "c293526c20420d3e428179d3da176dc5b1ad8904";
+    sha256 = "08qpjpyad9nk8bdsj71207msa7r9wciyggy3pxw0jbj2l27bb55w";
+    rev = "095cc4a211e7da95a10cccaccb0290eb29d60dc3";
     fetchSubmodules = true;
   };
   isLibrary = true;

@@ -3,12 +3,10 @@ module Test.ByteArray.Conversion
   )
 where
 
-import Hedgehog (Property, forAll, property, (===))
-import Hedgehog.Gen qualified as Gen
-import Hedgehog.Range qualified as Range
+import Hedgehog (forAll, property, (===))
 import Test.Tasty ()
 
-import Data.ByteArray.Prim (ByteArray#, unpack#, pack#)
+import Data.ByteArray.Prim (unpack#, pack#)
 
 import Test.Compat (TestTree, testGroup, testProp)
 import Test.Gen qualified as Gen

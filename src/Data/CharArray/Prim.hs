@@ -78,16 +78,20 @@ module Data.CharArray.Prim
   )
 where
 
+import Control.Exception (toException)
+
 import Data.Bool.Prim (Bool# (False#, True#))
 import Data.Bool.Prim qualified as Bool
 import Data.Coerce (coerce)
 import Data.Int.Prim (Int#)
 import Data.Int.Prim qualified as Int
 
-import GHC.Exts (Char#, State#, Addr#, Char (C#), RealWorld, Int (I#))
+import GHC.Exts (Char#, State#, Addr#, Char (C#), RealWorld, Int (I#), TYPE)
 import GHC.Exts qualified as GHC
 
 --------------------------------------------------------------------------------
+
+import Control.Exception.IndexError (IndexError (IndexError))
 
 import Data.CharArray.Prim.Core (CharArray# (CharArray#))
 import Data.CharArray.Prim.Unsafe (unsafeIndex#, unsafeThaw#)
@@ -99,6 +103,14 @@ import qualified Data.MutCharArray.Prim as MutCharArray
 import qualified Data.MutCharArray.Prim.Unsafe as MutCharArray
 
 --------------------------------------------------------------------------------
+
+raiseIndexError# :: forall r (a :: TYPE r). CharArray# -> Int# -> a
+raiseIndexError# xs# i# =
+  let exn :: IndexError
+      exn = IndexError 0 (toInteger (I# (size# xs#))) (toInteger (I# i#))
+   in GHC.raise# (toException exn)
+
+-- Construction ----------------------------------------------------------------
 
 -- | TODO
 --
@@ -208,7 +220,7 @@ index# xs# i# =
       upper# = Int.ltInt# i# (size# xs#)
    in case Bool.and# lower# upper# of
         True# -> unsafeIndex# xs# i#
-        False# -> '\NUL'#
+        False# -> raiseIndexError# xs# i#
 
 -- Write -----------------------------------------------------------------------
 

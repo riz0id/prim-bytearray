@@ -71,21 +71,30 @@ module Data.MutByteArray.Prim
   )
 where
 
+import Control.Exception.IndexError (IndexError (IndexError))
+
 import Data.Bool.Prim (Bool# (False#, True#))
 import Data.Bool.Prim qualified as Bool
 import Data.Int.Prim (Int#)
 import Data.Int.Prim qualified as Int
 
-import GHC.Exts (ByteArray#, MutableByteArray#, State#, Word8#, Addr#)
+import GHC.Exts (Addr#, ByteArray#, Int (I#), MutableByteArray#, State#, TYPE, Word8#)
 import GHC.Exts qualified as GHC
 
 --------------------------------------------------------------------------------
 
+import Control.Exception (toException)
 import Data.MutByteArray.Prim.Unsafe
   ( unsafeFreeze#,
     unsafeIndex#,
     unsafeWrite#,
   )
+
+raiseIndexError# :: forall r (a :: TYPE r) s. MutByteArray# s -> Int# -> a
+raiseIndexError# xs# i# =
+  let exn :: IndexError
+      exn = IndexError 0 (toInteger (I# (GHC.sizeofMutableByteArray# xs#))) (toInteger (I# i#))
+   in GHC.raise# (toException exn)
 
 -- | TODO
 --
@@ -144,7 +153,7 @@ freeze# src# st0# =
 --
 -- @since 1.0.0
 address# :: MutByteArray# s -> Addr#
-address# = GHC.mutableByteArrayContents# 
+address# = GHC.mutableByteArrayContents#
 
 -- | TODO
 --
@@ -178,7 +187,7 @@ index# xs# i# st0# =
       upper# = Int.ltInt# i# len#
    in case Bool.and# lower# upper# of
         True# -> unsafeIndex# xs# i# st1#
-        False# -> (# st1#, GHC.wordToWord8# 0## #)
+        False# -> raiseIndexError# xs# i# 
 
 -- Write -----------------------------------------------------------------------
 
