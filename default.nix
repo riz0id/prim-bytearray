@@ -9,7 +9,7 @@ in {
     fourmolu
     haskell-language-server
     hlint
-    prim-bytes; 
+    prim-bytearray; 
     
   inherit (pkgs) 
     cabal-install 

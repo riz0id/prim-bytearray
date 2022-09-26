@@ -5,6 +5,7 @@
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE UnliftedNewtypes #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 -- |
@@ -31,9 +32,7 @@ module Data.ByteArray.Prim
     -- aligned#,
 
     -- * Comparison
-    eq#,
-    same#,
-    compare#,
+    equiv#,
 
     -- * Copy
     slice#,
@@ -45,8 +44,10 @@ module Data.ByteArray.Prim
     -- * Query
     address#,
     size#,
-    null#,
-    pinned#,
+
+    -- * Predicates
+    isEmpty#,
+    isPinned#,
 
     -- * Index
     index#,
@@ -81,9 +82,10 @@ import Data.Bool.Prim (Bool# (F#, T#))
 import Data.Bool.Prim qualified as Bool
 import Data.Int.Prim (Int#)
 import Data.Int.Prim qualified as Int
+import Data.Ord.Prim (Eq# (..), Ord# (..), Ordering# (EQ#))
 import Data.Word (Word8)
 
-import GHC.Exts (Addr#, Int (I#), RealWorld, State#, TYPE, Word8#)
+import GHC.Exts (Addr#, ByteArray#, Int (I#), State#, TYPE, Word8#)
 import GHC.Exts qualified as GHC
 import GHC.Word (Word8 (W8#))
 
@@ -94,7 +96,6 @@ import Control.Exception.IndexError (IndexError (IndexError))
 import Data.ByteArray.Prim.Unsafe (unsafeIndex#, unsafeThaw#)
 import Data.MutByteArray.Prim (MutByteArray#)
 import Data.MutByteArray.Prim qualified as MutByteArray
-import Data.Primitive.ByteArray (ByteArray#)
 
 --------------------------------------------------------------------------------
 
@@ -104,24 +105,81 @@ raiseIndexError# xs# i# =
       exn = IndexError 0 (toInteger (I# (size# xs#))) (toInteger (I# i#))
    in GHC.raise# (toException exn)
 
+-- Eq# - ByteArray# ------------------------------------------------------------
+
+-- | @since 1.0.0
+instance Eq# ByteArray# where
+  xs# ==# ys# =
+    case equiv# xs# ys# of
+      T# -> T#
+      F# -> case size# xs# ==# size# ys# of
+        T# -> GHC.compareByteArrays# xs# 0# ys# 0# (size# xs#) ==# 0#
+        F# -> F#
+  {-# INLINE (==#) #-}
+
+  xs# /=# ys# =
+    case equiv# xs# ys# of
+      T# -> F#
+      F# -> case size# xs# ==# size# ys# of
+        T# -> GHC.compareByteArrays# xs# 0# ys# 0# (size# xs#) /=# 0#
+        F# -> T#
+  {-# INLINE (/=#) #-}
+
+-- Ord# - ByteArray# -----------------------------------------------------------
+
+-- | @since 1.0.0
+instance Ord# ByteArray# where
+  compare# xs# ys# =
+    case equiv# xs# ys# of
+      T# -> EQ#
+      F# -> case size# xs# ==# size# ys# of
+        T# -> compare# (GHC.compareByteArrays# xs# 0# ys# 0# (size# xs#)) 0#
+        F# -> compare# (size# xs#) (size# ys#)
+  {-# INLINE compare# #-}
+
+  xs# ># ys# =
+    case equiv# xs# ys# of
+      T# -> F#
+      F# -> case size# xs# ==# size# ys# of
+        T# -> GHC.compareByteArrays# xs# 0# ys# 0# (size# xs#) ># 0#
+        F# -> size# xs# ># size# ys#
+  {-# INLINE (>#) #-}
+
+  xs# >=# ys# =
+    case equiv# xs# ys# of
+      T# -> F#
+      F# -> case size# xs# ==# size# ys# of
+        T# -> GHC.compareByteArrays# xs# 0# ys# 0# (size# xs#) >=# 0#
+        F# -> size# xs# >=# size# ys#
+  {-# INLINE (>=#) #-}
+
+  xs# <# ys# =
+    case equiv# xs# ys# of
+      T# -> F#
+      F# -> case size# xs# ==# size# ys# of
+        T# -> GHC.compareByteArrays# xs# 0# ys# 0# (size# xs#) <# 0#
+        F# -> size# xs# <# size# ys#
+  {-# INLINE (<#) #-}
+
+  xs# <=# ys# =
+    case equiv# xs# ys# of
+      T# -> F#
+      F# -> case size# xs# ==# size# ys# of
+        T# -> GHC.compareByteArrays# xs# 0# ys# 0# (size# xs#) <=# 0#
+        F# -> size# xs# <=# size# ys#
+  {-# INLINE (<=#) #-}
+
 --------------------------------------------------------------------------------
 
 -- | TODO
 --
 -- @since 1.0.0
 pack# :: [Word8] -> ByteArray#
-pack# xs = GHC.runRW# \st0# ->
-  let !(I# len#) = length xs
-      !(# st1#, dst# #) = MutByteArray.new# len# st0#
-      !st2# = GHC.setByteArray# dst# 0# len# 0# st1#
-
-      loop# :: Int# -> [Word8] -> State# RealWorld -> State# RealWorld
-      loop# _ [] st# = st#
-      loop# i# (W8# x# : xs') st# =
-        let !st'# = MutByteArray.write# dst# i# x# st#
-         in loop# (Int.addInt# 1# i#) xs' st'#
-   in case MutByteArray.unsafeFreeze# dst# (loop# 0# xs st2#) of
-        (# _, xs# #) -> xs#
+pack# xs =
+  GHC.runRW# \st0# ->
+    let !(# st1#, dst# #) = MutByteArray.pack# xs st0#
+        !(# _, bxs# #) = MutByteArray.unsafeFreeze# dst# st1#
+     in bxs#
 {-# INLINE pack# #-}
 
 -- | TODO
@@ -133,37 +191,11 @@ unpack# = foldr'# (\x# xs -> W8# x# : xs) []
 
 -- Comparison ------------------------------------------------------------------
 
--- | TODO
+-- | Compares the 'address#' of two 'ByteArray#' values.
 --
 -- @since 1.0.0
-eq# :: ByteArray# -> ByteArray# -> Bool#
-eq# xs# ys# = Int.eqInt# 0# (compare# xs# ys#)
-
--- | TODO
---
--- @since 1.0.0
-same# :: ByteArray# -> ByteArray# -> Bool#
-same# xs# ys# = Bool.unsafeFromInt# (GHC.eqAddr# (address# xs#) (address# ys#))
-
--- | TODO
---
--- @since 1.0.0
-compare# :: ByteArray# -> ByteArray# -> Int#
-compare# xs# ys# = case same# xs# ys# of
-  T# -> 0#
-  F# ->
-    let len0# = size# xs#
-        len1# = size# ys#
-     in case Int.eqInt# len0# len1# of
-          T# -> GHC.compareByteArrays# xs# 0# ys# 0# len0#
-          F# -> compareInt# len0# len1#
-
--- TODO: gross
-compareInt# :: Int# -> Int# -> Int#
-compareInt# x# y# =
-  case Int.eqInt# x# y# of
-    T# -> 0#
-    F# -> Int.subInt# (x# GHC.<# y#) (x# GHC.># y#)
+equiv# :: ByteArray# -> ByteArray# -> Bool#
+equiv# xs# ys# = Bool.unsafeFromInt# (GHC.eqAddr# (address# xs#) (address# ys#))
 
 -- Copy ------------------------------------------------------------------------
 
@@ -211,17 +243,19 @@ address# = GHC.byteArrayContents#
 size# :: ByteArray# -> Int#
 size# = GHC.sizeofByteArray#
 
--- | TODO
---
--- @since 1.0.0
-null# :: ByteArray# -> Bool#
-null# xs# = Int.eqInt# 0# (size# xs#)
+-- Predicates ------------------------------------------------------------------
 
 -- | TODO
 --
 -- @since 1.0.0
-pinned# :: ByteArray# -> Bool#
-pinned# xs# = Bool.unsafeFromInt# (GHC.isByteArrayPinned# xs#)
+isEmpty# :: ByteArray# -> Bool#
+isEmpty# xs# = Int.eqInt# 0# (size# xs#)
+
+-- | TODO
+--
+-- @since 1.0.0
+isPinned# :: ByteArray# -> Bool#
+isPinned# xs# = Bool.unsafeFromInt# (GHC.isByteArrayPinned# xs#)
 
 -- Index -----------------------------------------------------------------------
 

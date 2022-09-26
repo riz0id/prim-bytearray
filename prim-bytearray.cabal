@@ -1,6 +1,6 @@
 cabal-version: 2.4
 
-name:        prim-bytes
+name:        prim-bytearray
 category:    Data
 version:     1.0.0
 synopsis:    TODO
@@ -9,7 +9,7 @@ description: TODO
 author:       jacob leach
 maintainer:   jacobleach@protonmail.com
 copyright:    2022, Jacob Leach
-homepage:     https://github.com/riz0id/prim-bytes
+homepage:     https://github.com/riz0id/prim-bytearray
 license:      ISC
 license-file: LICENSE
 build-type:   Simple
@@ -24,7 +24,7 @@ tested-with:
 
 source-repository head
   type:     git
-  location: https://github.com/riz0id/prim-bytes
+  location: https://github.com/riz0id/prim-bytearray
 
 flag llvm
   Description: Compile using the LLVM backend.
@@ -81,9 +81,10 @@ library
 
   build-depends:
     , ghc-prim         >= 0.7.0  && < 0.9
-    , prim-bool
+    , prim-bool        
     , prim-compat      >= 1.0.0  && < 1.1.0
-    , prim-int
+    , prim-int         >= 1.0.0  && < 1.1.0
+    , prim-ord         
     , primitive
     , template-haskell >= 2.17.0 && < 2.19
 
@@ -91,16 +92,8 @@ library
     Control.Exception.IndexError
     Data.ByteArray.Prim
     Data.ByteArray.Prim.Unsafe
-    Data.CharArray.Prim
-    Data.CharArray.Prim.Unsafe
     Data.MutByteArray.Prim
     Data.MutByteArray.Prim.Unsafe
-    Data.MutCharArray.Prim
-    Data.MutCharArray.Prim.Unsafe
-
-  other-modules:
-    Data.CharArray.Prim.Core
-    Data.MutCharArray.Prim.Core
 
 test-suite test
   import:         common
@@ -115,8 +108,10 @@ test-suite test
 
   build-depends:
     , hedgehog
+    , prim-bool
+    , prim-ord         
     , primitive
-    , prim-bytes
+    , prim-bytearray
     , tasty
     , tasty-hedgehog 
 
@@ -124,9 +119,7 @@ test-suite test
     Test.ByteArray
     Test.ByteArray.Conversion
     Test.ByteArray.Copy
-    Test.CharArray
-    Test.CharArray.Conversion
-    Test.CharArray.Copy
+    Test.ByteArray.Ord
     Test.Compat
     Test.Gen
     Test.MutByteArray

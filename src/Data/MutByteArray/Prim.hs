@@ -1,5 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskellQuotes #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UnboxedTuples #-}
@@ -25,6 +26,7 @@ module Data.MutByteArray.Prim
 
     -- * Construction
     new#,
+    pack#,
     -- pin#,
     -- aligned#,
 
@@ -77,13 +79,16 @@ import Data.Bool.Prim (Bool# (False#, True#))
 import Data.Bool.Prim qualified as Bool
 import Data.Int.Prim (Int#)
 import Data.Int.Prim qualified as Int
+import Data.Word (Word8)
 
 import GHC.Exts (Addr#, ByteArray#, Int (I#), MutableByteArray#, State#, TYPE, Word8#)
 import GHC.Exts qualified as GHC
+import GHC.Word (Word8 (W8#))
 
 --------------------------------------------------------------------------------
 
 import Control.Exception (toException)
+
 import Data.MutByteArray.Prim.Unsafe
   ( unsafeFreeze#,
     unsafeIndex#,
@@ -108,6 +113,21 @@ type MutByteArray# = MutableByteArray#
 -- @since 1.0.0
 new# :: Int# -> State# s -> (# State# s, MutByteArray# s #)
 new# len# = GHC.newPinnedByteArray# len# -- TODO: unpack as safe/unsafe
+
+-- | TODO
+--
+-- @since 1.0.0
+pack# :: forall s. [Word8] -> State# s -> (# State# s, MutByteArray# s #)
+pack# xs st0# =
+  let !(I# len#) = length xs
+      !(# st1#, dst# #) = new# len# st0#
+
+      loop# :: Int# -> [Word8] -> State# s -> State# s
+      loop# _ [] st# = st#
+      loop# i# (W8# x# : xs') st# =
+        loop# (Int.addInt# 1# i#) xs' (write# dst# i# x# st#)
+   in (# loop# 0# xs st1#, dst# #)
+{-# INLINE pack# #-}
 
 -- Copy ------------------------------------------------------------------------
 
@@ -187,7 +207,7 @@ index# xs# i# st0# =
       upper# = Int.ltInt# i# len#
    in case Bool.and# lower# upper# of
         True# -> unsafeIndex# xs# i# st1#
-        False# -> raiseIndexError# xs# i# 
+        False# -> raiseIndexError# xs# i#
 
 -- Write -----------------------------------------------------------------------
 

@@ -4,7 +4,7 @@ let
   pkgs = import ./default.nix { 
     inherit ghc; 
   };
-in pkgs.prim-bytes.env.overrideAttrs (self: {
+in pkgs.prim-bytearray.env.overrideAttrs (self: {
   buildInputs = self.buildInputs ++ [ 
     pkgs.cabal-install
     pkgs.clang

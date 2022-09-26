@@ -4,4 +4,4 @@ let
   pkgs = import ./default.nix { 
     inherit ghc; 
   };
-in pkgs.prim-bytes
+in pkgs.prim-bytearray

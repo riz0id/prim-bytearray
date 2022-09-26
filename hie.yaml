@@ -1,12 +1,11 @@
 cradle:
   cabal:
     - path: "./src"
-      component: "lib:prim-bytes"
+      component: "lib:prim-bytearray"
     - path: "./test"
       component: "test:test"
 
 dependencies:
-  - prim-bytes.cabal
+  - prim-bytearray.cabal
   - default.nix
   - shell.nix
-  - .hlint.yaml

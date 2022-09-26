@@ -17,7 +17,7 @@ testTree :: TestTree
 testTree =
   testGroup
     "Conversion"
-    [ testProp "String" $ property do
+    [ testProp "[Word8]" $ property do
         str <- forAll Gen.list'word8 
         unpack# (pack# str) === str
     ]
