@@ -204,19 +204,24 @@ equiv# xs# ys# = Bool.unsafeFromInt# (GHC.eqAddr# (address# xs#) (address# ys#))
 -- @since 1.0.0
 slice# :: ByteArray# -> Int# -> Int# -> State# s -> (# State# s, ByteArray# #)
 slice# src# i0# i1# st0# =
-  let !len# = Int.subInt# i1# i0#
-      !(# st1#, dst# #) = MutByteArray.new# len# st0#
-      !st2# = GHC.copyByteArray# src# i0# dst# 0# len# st1#
-   in MutByteArray.unsafeFreeze# dst# st2#
+  -- TODO: assert# i0# <=# i1#
+  case i0# <# size# src# of 
+    F# -> raiseIndexError# src# i0#
+    T# -> case i1# <# size# src# of 
+      F# -> raiseIndexError# src# i1#
+      T# -> 
+        let !len# = Int.subInt# i1# i0#
+            !(# st1#, dst# #) = MutByteArray.new# len# st0#
+            !st2# = GHC.copyByteArray# src# i0# dst# 0# len# st1#
+         in MutByteArray.unsafeFreeze# dst# st2#
 
 -- | TODO
 --
 -- @since 1.0.0
 clone# :: ByteArray# -> State# s -> (# State# s, ByteArray# #)
 clone# src# st0# =
-  let !len# = size# src#
-      !(# st1#, dst# #) = MutByteArray.new# len# st0#
-      !st2# = GHC.copyByteArray# src# 0# dst# 0# len# st1#
+  let !(# st1#, dst# #) = MutByteArray.new# (size# src#) st0#
+      !st2# = GHC.copyByteArray# src# 0# dst# 0# (size# src#) st1#
    in MutByteArray.unsafeFreeze# dst# st2#
 
 -- Thaw ------------------------------------------------------------------------

@@ -4,7 +4,7 @@ module Test.ByteArray.Ord
 where
 
 import Data.Bool.Prim qualified as Bool
-import Data.ByteArray.Prim (unpack#)
+import Data.ByteArray.Prim (unpack#, equiv#)
 import Data.Ord.Prim (Eq# (..), Ord# (..))
 import Data.Ord.Prim qualified as Ord
 import Data.Primitive (ByteArray (ByteArray))
@@ -21,13 +21,20 @@ testTree :: TestTree
 testTree =
   testGroup
     "Ord"
-    [ testProp "(==#)" $ property do
-        (ByteArray xs#) <- forAll Gen.bytearray
-        (ByteArray ys#) <- forAll Gen.bytearray
+    [ testProp "equiv# xs xs" $ property do
+        ByteArray xs# <- forAll Gen.bytearray
+        Bool.toBool (equiv# xs# xs#) === True
+    , testProp "equiv# xs ys" $ property do
+        ByteArray xs# <- forAll Gen.bytearray
+        ByteArray ys# <- forAll Gen.bytearray
+        Bool.toBool (equiv# xs# ys#) === False
+    , testProp "(==#)" $ property do
+        ByteArray xs# <- forAll Gen.bytearray
+        ByteArray ys# <- forAll Gen.bytearray
         Bool.toBool (xs# ==# ys#) === (unpack# xs# == unpack# ys#)
     , testProp "(/=#)" $ property do
-        (ByteArray xs#) <- forAll Gen.bytearray
-        (ByteArray ys#) <- forAll Gen.bytearray
+        ByteArray xs# <- forAll Gen.bytearray
+        ByteArray ys# <- forAll Gen.bytearray
         Bool.toBool (xs# /=# ys#) === (unpack# xs# /= unpack# ys#)
     , testProp "compare#" $ property do
         xs@(ByteArray xs#) <- forAll Gen.bytearray
