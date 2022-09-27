@@ -205,15 +205,15 @@ equiv# xs# ys# = Bool.unsafeFromInt# (GHC.eqAddr# (address# xs#) (address# ys#))
 slice# :: ByteArray# -> Int# -> Int# -> State# s -> (# State# s, ByteArray# #)
 slice# src# i0# i1# st0# =
   -- TODO: assert# i0# <=# i1#
-  case i0# <# size# src# of 
-    F# -> raiseIndexError# src# i0#
-    T# -> case i1# <# size# src# of 
-      F# -> raiseIndexError# src# i1#
+  case Bool.and# (0# <=# i0#) (i0# <=# size# src#) of 
+    T# -> case Bool.and# (0# <=# i1#) (i1# <=# size# src#) of 
       T# -> 
         let !len# = Int.subInt# i1# i0#
             !(# st1#, dst# #) = MutByteArray.new# len# st0#
             !st2# = GHC.copyByteArray# src# i0# dst# 0# len# st1#
          in MutByteArray.unsafeFreeze# dst# st2#
+      F# -> GHC.raise# (toException (IndexError 0 (1 + toInteger (I# (size# src#))) (toInteger (I# i1#))))
+    F# -> GHC.raise# (toException (IndexError 0 (1 + toInteger (I# (size# src#))) (toInteger (I# i0#))))
 
 -- | TODO
 --
